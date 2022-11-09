@@ -33,7 +33,9 @@ var context = canvas.getContext("2d");
 var W = canvas.width  = window.innerWidth-6;
 var H = canvas.height = window.innerHeight-50;
 
+var worldURI = window.location.href.replace(window.location.pathname,`/world`)
 var isPartyMode = false // initialize to false
+
 function setIsPartyMode() {
     isPartyMode = !isPartyMode
     if (isPartyMode) {
@@ -60,14 +62,23 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
     };
     //XXX: POST to a URL
     // open(method, url, async)
-    xhr.open("POST", url, true)
+    var method = "POST"
+    if (url == worldURI) {
+        method = "GET"
+    }
+    xhr.open(method, url, true)
 
     //XXX: set the mimetype and the accept headers!
     // Remember to use application/json !
         xhr.setRequestHeader("Content-Type","application/json")
         xhr.setRequestHeader("Accept", "application/json");
-        var body = JSON.stringify(objects)
-        xhr.send(body)
+        if (method == "POST") {
+            var body = JSON.stringify(objects)
+            xhr.send(body)
+        }
+        else {
+            xhr.send(null)
+        }
 }
 
 
@@ -298,8 +309,7 @@ function update() {
 
     // window.location.href returns the URL of the current page
     // window.location.pathname returns the pathname of the current page
-    var uri = window.location.href.replace(window.location.pathname,`/world`)
-    sendJSONXMLHTTPRequest(uri,{},function(json){
+    sendJSONXMLHTTPRequest(worldURI,{},function(json){
     world = json})
     drawFrame();
 }
