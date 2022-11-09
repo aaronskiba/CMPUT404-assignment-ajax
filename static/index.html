@@ -23,8 +23,9 @@
     "/>
     <script src="json2.js"></script>
   </head> 
-  <body bgcolor="black" height="100%" width="100%"> 
-    <canvas id="c" width="100%" height="100%" style="-webkit-tap-highlight-color: transparent;"></canvas> 
+  <body bgcolor="black" height="100%" width="100%">
+    <button onclick =setIsPartyMode()>🎉Party Mode🎉</button>
+    <canvas id="c" width="100%" height="100%" style="-webkit-tap-highlight-color: transparent;"></canvas>
     <script>
 var canvas = document.getElementById('c');
 var host = window.location.host;
@@ -32,6 +33,13 @@ var context = canvas.getContext("2d");
 var W = canvas.width  = window.innerWidth-6;
 var H = canvas.height = window.innerHeight-50;
 
+var isPartyMode = false // initialize to false
+function setIsPartyMode() {
+    isPartyMode = !isPartyMode
+    if (isPartyMode) {
+    drawNextFrame()
+}
+}
 
 function sendJSONXMLHTTPRequest(url, objects, callback) {
     var xhr = new XMLHttpRequest();
@@ -72,15 +80,25 @@ function drawCircle(context,entity) {
         lineWidth = 3;
         var x = entity["x"];
         var y = entity["y"];
-        //moveTo(x,y);
-        fillStyle = entity["colour"];
-        strokeStyle = fillStyle;
+        // moveTo(x,y);
+        fillStyle = entity["colour"]
+        strokeStyle = fillStyle
         arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);
-        fill(); // change from stroke to fill                           
+        // stroke vs fill depends on radius
+        if (entity["radius"] > 30) {
+            stroke();
+        }
+        else {
+            fill();
+        }                         
     }
 }
 
 function prepEntity(entity) {
+    if (isPartyMode) {
+        // creates strobe effect for party mode
+        entity["colour"] = getRandomColour()
+    }
     if (!entity["colour"]) {
         entity["colour"] = "#FF0000";
     }
@@ -120,7 +138,7 @@ function drawNextFrame() {
 function drawFrame() {
     if (drawNext) {
         renderFrame();
-        drawNext = false;
+        drawNext = isPartyMode
     }
 }
 
@@ -262,16 +280,16 @@ mouse = (function() {
 // Add the application specific mouse listeners!
 //XXX: TODO Make these prettier!
 mouse.mousedowners.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':getRandomColour(),'radius':10}); // on mouse push
+    addEntityWithoutName({'x':x,'y':y,'colour':getRandomColour(),'radius':getRandomInt()}); // on mouse push
 });
 
 mouse.mouseuppers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':getRandomColour(),'radius':10}); // on mouse release
+    addEntityWithoutName({'x':x,'y':y,'colour':getRandomColour(),'radius':getRandomInt()}); // on mouse release
 });
 
 mouse.mousedraggers.push(function(x,y,clicked,e) {
     addEntityWithoutName({'x':x,'y':y,'colour':getRandomColour(), // on mouse drag
-                          'radius':10});
+                          'radius':getRandomInt()});
 });
 
 
@@ -282,7 +300,6 @@ function update() {
     // window.location.pathname returns the pathname of the current page
     var uri = window.location.href.replace(window.location.pathname,`/world`)
     sendJSONXMLHTTPRequest(uri,{},function(json){
-    // set world = json
     world = json})
     drawFrame();
 }
@@ -291,7 +308,16 @@ function getRandomColour() {
     // https://css-tricks.com/snippets/javascript/random-hex-color/
     var randomColor = Math.floor(Math.random()*16777215).toString(16);
     return `#${randomColor}`
+}
 
+function getRandomInt() {
+    let x = Math.floor(Math.random() * 300);
+    if (x < 299) {
+        // return small circle
+        return Math.floor(Math.random() * 10);}
+    // else return potentially big circle
+    return Math.floor(Math.random() * 400);
+    
 }
 
 // 30 frames per second
